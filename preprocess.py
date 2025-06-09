@@ -2,41 +2,41 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
-from sklearn.preprocessing import LabelEncoder, StandardScaler
+from sklearn.preprocessing import LabelEncoder, StandardScaler, RobustScaler
 
-def _preprocess_cic2023_mini():
-    # Đọc dữ liệu từ file CSV
-    df = pd.read_csv('data/cic2023_mini.csv')
+def preprocess_dataframe(df):
+    df_copy = df.copy()
 
-    # Preprocessing dữ liệu CIC 2023 mini
-    print("=== PREPROCESSING DỮ LIỆU CIC 2023 MINI ===")
+    # Apply frequency encoding to 'protocol_type'
+    protocol_type_counts = df_copy['protocol_type'].value_counts()
+    df_copy['protocol_type'] = df_copy['protocol_type'].map(protocol_type_counts)
 
-    # Tách features và labels
-    X = df.drop('Label', axis=1).values
-    y_true = df['Label'].values
+    # Apply RobustScaler to continuous data
+    continuous_columns = df_copy.select_dtypes(include=[np.number]).columns
+    scaler = RobustScaler()
+    df_copy[continuous_columns] = scaler.fit_transform(df_copy[continuous_columns])
 
-    # Encode labels thành số
+    # Binary encode boolean data
+    bool_columns = df_copy.select_dtypes(include=['bool']).columns
+    encoder = LabelEncoder()
+    for col in bool_columns:
+        df_copy[col] = encoder.fit_transform(df_copy[col])
+
+    # Normalize all features except 'label' using StandardScaler
+    feature_columns = [col for col in df_copy.columns if col != 'label']
+    standard_scaler = StandardScaler()
+    df_copy[feature_columns] = standard_scaler.fit_transform(df_copy[feature_columns])
+
+    return df_copy
+
+def _preprocess_cic2023_mini(path: str):
+    df = pd.read_csv(path)
+    df = preprocess_dataframe(df)
+    X = df.drop(columns=['label']).values
+    y = df['label'].values
     label_encoder = LabelEncoder()
-    y_encoded = label_encoder.fit_transform(y_true)
-
-    # print(f"Features shape: {X.shape}")
-    # print(f"Labels: {label_encoder.classes_}")
-    # print(f"Label distribution: {np.bincount(y_encoded)}")
-
-    # Chuẩn hóa dữ liệu
-    scaler = StandardScaler()
-    X_scaled = scaler.fit_transform(X)
-
-    # print(f"Data scaled - Mean: {X_scaled.mean():.4f}, Std: {X_scaled.std():.4f}")
-    return X_scaled, y_encoded
-
-def _preprocess_cic2023_mini_for_pca(dim=2):
-    X_scaled, y_encoded = _preprocess_cic2023_mini()
-    from sklearn.decomposition import PCA
-    pca = PCA(n_components=dim)
-    X_pca = pca.fit_transform(X_scaled)
-
-    return X_pca, y_encoded
+    y_encoded = label_encoder.fit_transform(y)
+    return X, y_encoded
 
 # # Sử dụng PCA để giảm chiều cho visualization
 # from sklearn.decomposition import PCA

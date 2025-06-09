@@ -12,7 +12,13 @@ class FCM:
         self.max_iter = max_iter
         self.tol = tol
         self.random_state = random_state
-        self.distance_metric = self.euclidean_distance if distance_metric == 'euclidean' else self.canberra_distance
+        self.mapping = {
+            'euclidean': self.euclidean_distance,
+            'canberra': self.canberra_distance,
+            'manhattan': self.manhattan_distance,
+            'minkowski': self.minkowski_distance
+        }
+        self.distance_metric = self.mapping.get(distance_metric, self.euclidean_distance)
         
     def euclidean_distance(self, x, y):
         """Tính khoảng cách Euclidean"""
@@ -20,13 +26,18 @@ class FCM:
     
     def canberra_distance(self, x, y):
         """Tính khoảng cách Canberra"""
-        distances = []
-        for i in range(len(x)):
-            numerator = np.abs(x[i] - y)
-            denominator = np.abs(x[i]) + np.abs(y) + 1e-10  # Tránh chia cho 0
-            distance = np.sum(numerator / denominator, axis=1)
-            distances.append(distance)
-        return np.array(distances)
+        numerator = np.abs(x - y)
+        denominator = np.abs(x) + np.abs(y) + 1e-10  # Tránh chia cho 0
+        distance = np.sum(numerator / denominator, axis=1)
+        return distance
+    
+    def manhattan_distance(self, x, y):
+        """Tính khoảng cách Manhattan"""
+        return np.sum(np.abs(x - y), axis=1)
+    
+    def minkowski_distance(self, x, y, p=3):
+        """Tính khoảng cách Minkowski với tham số p"""
+        return np.sum(np.abs(x - y) ** p, axis=1) ** (1 / p)
     
     def fit(self, X):
         np.random.seed(self.random_state)
