@@ -14,7 +14,7 @@ warnings.filterwarnings('ignore')
 class FCMEvaluator:
     def __init__(self, experiment_dir):
         self.experiment_dir = experiment_dir
-        self.data_path = "/home/merlin/project/cic2023_project/data/0.01percent_34classes.csv"
+        self.data_path = "./data/0.01percent_34classes.csv"
         self.X = None
         self.original_labels = None
         self.evaluation_results = []
@@ -110,13 +110,15 @@ class FCMEvaluator:
             centroids = results_data['centroids']
             predicted_labels = results_data['predicted_labels']
             
-            # Tính các metrics
+            # Tính các metrics nhanh
             wcss = self.calculate_wcss(self.X, centroids, predicted_labels)
             silhouette = self.calculate_silhouette_score(self.X, predicted_labels)
-            pc = self.calculate_partition_coefficient(membership_matrix)
-            pe = self.calculate_partition_entropy(membership_matrix)
-            xb = self.calculate_xie_beni_index(self.X, membership_matrix, centroids, 
-                                             experiment_info['parameters']['m'])
+            
+            # Comment lại các thuật toán chạy lâu
+            # pc = self.calculate_partition_coefficient(membership_matrix)
+            # pe = self.calculate_partition_entropy(membership_matrix)
+            # xb = self.calculate_xie_beni_index(self.X, membership_matrix, centroids, 
+            #                                  experiment_info['parameters']['m'])
             
             evaluation = {
                 'experiment_id': experiment_info['experiment_id'],
@@ -124,9 +126,9 @@ class FCMEvaluator:
                 'metrics': {
                     'wcss': float(wcss),
                     'silhouette_score': float(silhouette),
-                    'partition_coefficient': float(pc),
-                    'partition_entropy': float(pe),
-                    'xie_beni_index': float(xb)
+                    # 'partition_coefficient': float(pc),
+                    # 'partition_entropy': float(pe),
+                    # 'xie_beni_index': float(xb)
                 },
                 'training_time': experiment_info['results']['training_time_seconds']
             }
@@ -414,7 +416,7 @@ def evaluate_fcm_experiments(experiment_dir):
 
 def find_latest_experiment_dir():
     """Tìm thư mục thử nghiệm mới nhất"""
-    test_cluster_dir = "/home/merlin/project/cic2023_project/test_cluster"
+    test_cluster_dir = "./test_cluster"
     if not os.path.exists(test_cluster_dir):
         return None
     
@@ -442,7 +444,7 @@ if __name__ == "__main__":
         print("📝 Hãy chạy fcm_experiment.py trước để tạo dữ liệu thử nghiệm.")
         
         # Hiển thị thư mục có sẵn
-        test_cluster_dir = "/home/merlin/project/cic2023_project/test_cluster"
+        test_cluster_dir = "./test_cluster"
         if os.path.exists(test_cluster_dir):
             print("\n📁 Các thư mục có sẵn trong test_cluster:")
             for item in os.listdir(test_cluster_dir):
